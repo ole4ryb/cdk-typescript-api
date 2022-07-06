@@ -29,8 +29,10 @@ export class CdkTypescriptApiStack extends Stack {
       displayName: 'ClientDonationsTopic',
     });
 
+    const emailAcc = this.node.tryGetContext('email_acc');
+
     new Subscription(this, 'EmailSubscription', {
-      endpoint: 'oleksi.rybak@gmail.com',
+      endpoint: emailAcc,
       protocol: SubscriptionProtocol.EMAIL,
       topic: topic,
     });

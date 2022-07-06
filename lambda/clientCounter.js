@@ -22,7 +22,7 @@ module.exports.handler = (event, context, callback) => {
         callback(null, {
           statusCode: error.statusCode || 501,
           headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not get books.'
+          body: 'Could not get donations.'
         });
         return;
       }

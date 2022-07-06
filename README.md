@@ -13,3 +13,13 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
+
+## Deployment steps
+- Download the code from the repo
+- go to the root directory of the project
+- run `cdk bootstrap` which will install the bootstrap stack of the environment
+- run `cdk deploy -c email_acc=<email account>`. in place of `<email account>` place your email account. After deployment check your email and confirm the subscription.
+- add data into DynamoDB. There are two columns that need to be populated with the following format: id-value.
+- copy the generated url from the command line and add `/client/<id>` for example `https://orrfby8ayb.execute-api.eu-west-2.amazonaws.com/prod/client/1` to see how many payments have been made for a particular client. If there are 2 or more an email with the confrimation should be generated.
+
+

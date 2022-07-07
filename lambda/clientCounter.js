@@ -2,6 +2,7 @@
 const { DynamoDB, Lambda, SNS } = require('aws-sdk');
 
 const sns = new SNS();
+var documentClient = new DynamoDB.DocumentClient();
 
 module.exports.handler = (event, context, callback) => {
     console.log("request:", JSON.stringify(event, undefined, 2));
@@ -13,8 +14,6 @@ module.exports.handler = (event, context, callback) => {
       Select: "COUNT"
     };
     
-    var documentClient = new DynamoDB.DocumentClient();
-
     documentClient.scan(params, (error, result) => {
       // error handling
       if (error) {

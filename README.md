@@ -17,6 +17,7 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 ## Deployment steps
 - Download the code from the repo
 - go to the root directory of the project
+- run `npm cache clean --force` and then `npm install` to install the required libraries
 - run `cdk bootstrap` which will install the bootstrap stack of the environment
 - run `cdk deploy -c email_acc=<email account>`. in place of `<email account>` place your email account. After deployment check your email and confirm the subscription.
 - add data into DynamoDB. There are two columns that need to be populated with the following format: id-value.

@@ -52,7 +52,7 @@ export class CdkTypescriptApiStack extends Stack {
         type: dynamodb.AttributeType.STRING
       }, 
       sortKey: {
-        name: 'donations_amount',
+        name: 'timestamp',
         type: dynamodb.AttributeType.NUMBER
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -70,7 +70,7 @@ export class CdkTypescriptApiStack extends Stack {
     const clients = this.consumerCounterApi.root.addResource('clients');
     const clientWithId = clients.addResource('{id}');
     clients.addMethod('GET', new apigw.LambdaIntegration(this.clientCounterLambda));
-    clients.addMethod('PUT', new apigw.LambdaIntegration(this.clientCounterLambda));
+    clients.addMethod('POST', new apigw.LambdaIntegration(this.clientCounterLambda));
 
     clientWithId.addMethod('GET', new apigw.LambdaIntegration(this.clientCounterLambda));
     clientWithId.addMethod('DELETE', new apigw.LambdaIntegration(this.clientCounterLambda));

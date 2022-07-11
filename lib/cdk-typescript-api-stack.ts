@@ -73,8 +73,7 @@ export class CdkTypescriptApiStack extends Stack {
     clients.addMethod('POST', new apigw.LambdaIntegration(this.clientCounterLambda));
 
     clientWithId.addMethod('GET', new apigw.LambdaIntegration(this.clientCounterLambda));
-    clientWithId.addMethod('DELETE', new apigw.LambdaIntegration(this.clientCounterLambda));
-
+    
   }  
 
   private createCustomerApiLambda = () => {

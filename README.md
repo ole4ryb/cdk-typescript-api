@@ -23,4 +23,9 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 - add data into DynamoDB. There are two columns that need to be populated with the following format: id-value.
 - copy the generated url from the command line and add `/client/<id>` for example `https://orrfby8ayb.execute-api.eu-west-2.amazonaws.com/prod/client/1` to see how many payments have been made for a particular client. If there are 2 or more an email with the confrimation should be generated.
 
+## Scalability
+As lambda serverless functionality is used it means that we don't have to worry about scalability that much as lambda function will be scaled by AWS if more instances is needed. There is a limit of cumulative concurrency per Region which is between 500 and 3000. So in case if the limit is crossed we can either create another lambda instance in another AWS region or submit a request to AWS Support Center to increase the default limit or both. 
+With  DynamoDB in order to scale it we will need to create a scaling policy for a table where we will need to specify whether we will scale write or read capacity (or both). There are some other params that can be specified (min/max provisioned capacity unit, target utilization etc) which will allow to fine-tune the performance. 
+
+
 

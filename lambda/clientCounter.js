@@ -20,44 +20,48 @@ module.exports.handler = async (event, context, callback) => {
             case "GET /clients":
                 body = await documentClient.scan({TableName: TABLE}).promise();
                 break;
+
             case "GET /clients/{id}":
               
-              var params = {
-                TableName: process.env.DYNAMODB_TABLE,
-                FilterExpression : 'client_id = :c_id',
-                ExpressionAttributeValues : {':c_id' : `${event.pathParameters.id}`},
-                Select: "COUNT"
-              };
+              documentClient.query(
+                {
+                  TableName: TABLE,
+                  KeyConditionExpression: "#client_id = :id ",
+                  ExpressionAttributeValues: {
+                    ":id": event.pathParameters.id,
+                  },
+                  ExpressionAttributeNames: {
+                    "#client_id": "client_id",
+                  },
+                  Select: "COUNT"
+                },
+                function (err, data) {
+                  if (err) {
+                     console.error(err);
+                  } else {
+                    console.log("dynamodb query succeeded:", JSON.stringify(data["Count"], null, 2)); 
+
+                    const donationsCount = data["Count"]; 
+
+                    if(donationsCount > 1) {
+                      const params = {
+                        Message: `Thank you for making ${donationsCount} donations!  \n`,            
+                        TopicArn: process.env.SNS_TOPIC_ANR 
+                      };
+                      sns.publish(params).promise();
+                    }
+                    body = `Thank you for making ${donationsCount} donations!  \n`;
               
-              documentClient.scan(params, (error, result) => {
-                // error handling
-                if (error) {
-                  console.error(error);
-                  callback(null, {
-                    statusCode: error.statusCode || 501,
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: 'Could not get donations.'
-                  });
-                  return;
+                    const response = {
+                      statusCode: 200,
+                      body: `Thank you for making ${donationsCount} donations!  \n`         
+                    };
+                    callback(null, response);  
+                  }                   
                 }
+              );
           
-                const donationsCount = result["Count"];
-                if(donationsCount > 1) {
-                  const params = {
-                    Message: `Thank you for making ${donationsCount} donations!  \n`,            
-                    TopicArn: process.env.SNS_TOPIC_ANR 
-                  };
-                  sns.publish(params).promise();
-                }
-          
-                const response = {
-                  statusCode: 200,
-                  body: `Thank you for making more than 2 donations!  \n`         
-                };
-                callback(null, response);
-              });
-                              
-            break;
+              break;
 
             case "POST /clients":
           
@@ -82,8 +86,6 @@ module.exports.handler = async (event, context, callback) => {
               body = `PUT item ${requestJSON.id} into DB`;
               break;
 
-              
-
             default:
                 throw new Error(`Unsupported route: "${route}"`);
         }
@@ -96,57 +98,10 @@ module.exports.handler = async (event, context, callback) => {
         body = JSON.stringify(body);
     }
 
-    //return {
-    //  successStatusCode,
-    //    body,
-    //    headers
-    //};
-
     const response = {
       statusCode: successStatusCode,
-      body: body //`Hello, you've made ${donationsCount} donations. Thank you!  \n`
+      body: body 
     };
     callback(null, response);
-
-
-    //------------------------------------
-  /*
-
-    var params = {
-      TableName: process.env.DYNAMODB_TABLE,
-      FilterExpression : 'client_id = :c_id',
-      ExpressionAttributeValues : {':c_id' : `${event.pathParameters.id}`},
-      Select: "COUNT"
-    };
-    
-    documentClient.scan(params, (error, result) => {
-      // error handling
-      if (error) {
-        console.error(error);
-        callback(null, {
-          statusCode: error.statusCode || 501,
-          headers: { 'Content-Type': 'text/plain' },
-          body: 'Could not get donations.'
-        });
-        return;
-      }
-
-      const donationsCount = result["Count"];
-      if(donationsCount > 1) {
-        const params = {
-          Message: `Thank you for making ${donationsCount} donations!  \n`,            
-          TopicArn: process.env.SNS_TOPIC_ANR 
-        };
-        sns.publish(params).promise();
-      }
-
-      const response = {
-        statusCode: 200,
-        body: `Hello, you've made ${donationsCount} donations. Thank you!  \n`         
-      };
-      callback(null, response);
-    });
-
-    */
 
   };

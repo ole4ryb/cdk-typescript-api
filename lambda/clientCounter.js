@@ -1,7 +1,6 @@
 
 const { DynamoDB, Lambda, SNS } = require('aws-sdk');
 
-const sns = new SNS();
 var documentClient = new DynamoDB.DocumentClient();
 
 module.exports.handler = async (event, context, callback) => {
@@ -9,7 +8,7 @@ module.exports.handler = async (event, context, callback) => {
     let body;
     let successStatusCode = 200;
     console.log("request:", JSON.stringify(event, undefined, 2));
-
+    
     let path = event.resource;
     let httpMethod = event.httpMethod;
     let route = httpMethod.concat(' ').concat(path);
@@ -18,11 +17,12 @@ module.exports.handler = async (event, context, callback) => {
     try {
         switch (route) {
             case "GET /clients":
-                body = await documentClient.scan({TableName: TABLE}).promise();
+                body = await this.scanAndGetResult(TABLE);
                 break;
 
             case "GET /clients/{id}":
               
+              const sns = new SNS();
               documentClient.query(
                 {
                   TableName: TABLE,
@@ -105,3 +105,8 @@ module.exports.handler = async (event, context, callback) => {
     callback(null, response);
 
   };
+
+  module.exports.scanAndGetResult =  async (TABLE) => {
+  const result = await documentClient.scan({ TableName: TABLE }).promise();
+  return result;
+}

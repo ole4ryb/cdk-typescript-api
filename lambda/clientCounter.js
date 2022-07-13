@@ -22,7 +22,11 @@ module.exports.handler = async (event, context, callback) => {
 
             case "GET /clients/{id}":
               const sns = new SNS();
-              body = this.fetchDonationsCount(event, sns, TABLE, callback);
+              try {
+                body = this.fetchDonationsCount(event, sns, TABLE, callback);
+              } catch(err) {
+                console.log(err);
+              }
           
               break;
 
@@ -67,8 +71,6 @@ module.exports.handler = async (event, context, callback) => {
     };
     callback(null, response);
 
-
-  
   };
 
   module.exports.scanAndGetResult =  async (TABLE) => {

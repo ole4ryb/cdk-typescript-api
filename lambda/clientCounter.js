@@ -17,62 +17,25 @@ module.exports.handler = async (event, context, callback) => {
     try {
         switch (route) {
             case "GET /clients":
-                body = await this.scanAndGetResult(TABLE);
-                break;
+              body = await this.scanAndGetResult(TABLE);
+              break;
 
             case "GET /clients/{id}":
-              
               const sns = new SNS();
-              documentClient.query(
-                {
-                  TableName: TABLE,
-                  KeyConditionExpression: "#client_id = :id ",
-                  ExpressionAttributeValues: {
-                    ":id": event.pathParameters.id,
-                  },
-                  ExpressionAttributeNames: {
-                    "#client_id": "client_id",
-                  },
-                  Select: "COUNT"
-                },
-                function (err, data) {
-                  if (err) {
-                     console.error(err);
-                  } else {
-                    console.log("dynamodb query succeeded:", JSON.stringify(data["Count"], null, 2)); 
-
-                    const donationsCount = data["Count"]; 
-
-                    if(donationsCount > 1) {
-                      const params = {
-                        Message: `Thank you for making ${donationsCount} donations!  \n`,            
-                        TopicArn: process.env.SNS_TOPIC_ANR 
-                      };
-                      sns.publish(params).promise();
-                    }
-                    body = `Thank you for making ${donationsCount} donations!  \n`;
-              
-                    const response = {
-                      statusCode: 200,
-                      body: `Thank you for making ${donationsCount} donations!  \n`         
-                    };
-                    callback(null, response);  
-                  }                   
-                }
-              );
+              body = this.fetchDonationsCount(event, sns, TABLE, callback);
           
               break;
 
             case "POST /clients":
           
-                var params = {
-                  TableName: TABLE,
-                  Item: {
-                    'client_id' : requestJSON.id,
-                    'timestamp': Date.now(),
-                    'donations_amount': requestJSON.donations_amount                    
-                  }                                   
-                };   
+              var params = {
+                TableName: TABLE,
+                Item: {
+                  'client_id' : requestJSON.id,
+                  'timestamp': Date.now(),
+                  'donations_amount': requestJSON.donations_amount                    
+                }                                   
+              };   
               
               try {  
                 var result = await documentClient.put(params, function(err, data) {
@@ -104,9 +67,53 @@ module.exports.handler = async (event, context, callback) => {
     };
     callback(null, response);
 
+
+  
   };
 
   module.exports.scanAndGetResult =  async (TABLE) => {
-  const result = await documentClient.scan({ TableName: TABLE }).promise();
-  return result;
-}
+    return await documentClient.scan({ TableName: TABLE }).promise();    
+  }
+
+  module.exports.fetchDonationsCount = async (event, sns, tableName, callback) => {
+    
+    documentClient.query(
+      {
+        TableName: tableName,
+        KeyConditionExpression: "#client_id = :id",
+        ExpressionAttributeValues: {
+          ":id": event.pathParameters.id,
+        },
+        ExpressionAttributeNames: {
+          "#client_id": "client_id",
+        },
+        Select: "COUNT"
+      },
+      function (err, data) {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log("dynamodb query succeeded:", JSON.stringify(data["Count"], null, 2));
+
+          const donationsCount = data["Count"];
+          const donationsMsg = `Thank you for making ${donationsCount} donations!  \n`;
+
+          if (donationsCount > 1) {
+            const params = {
+              Message: donationsMsg,
+              TopicArn: process.env.SNS_TOPIC_ANR
+            };
+            sns.publish(params).promise();
+          }
+          this.body = donationsMsg;
+
+          const response = {
+            statusCode: 200,
+            body: donationsMsg
+          };
+          callback(null, response);
+          
+        }
+      }
+    );
+  }

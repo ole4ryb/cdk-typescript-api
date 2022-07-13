@@ -1,4 +1,6 @@
-import * as DynamoDB from 'aws-sdk';
+import { CfnGeofenceCollection } from "aws-cdk-lib/aws-location";
+
+const { DynamoDB, SNS } = require('aws-sdk');
 
 
 const mockDynamodbScan = jest.fn().mockReturnValue({
@@ -7,10 +9,19 @@ const mockDynamodbScan = jest.fn().mockReturnValue({
   })
 });
 
+const mockDynamodbQuery = jest.fn().mockReturnValue({
+  promise: jest.fn().mockResolvedValue({
+    body: '{"Count": 2}',
+    data: { "Count": 2 },
+    Count: 2
+  })
+});
+
 const mockDynamoDBPromise = jest.fn();
 
 const mDocumentClientInstance = {
   scan: mockDynamodbScan,
+  query: mockDynamodbQuery,
   promise: mockDynamoDBPromise,
 };
 
@@ -24,9 +35,9 @@ jest.mock('aws-sdk', () => {
 
 describe('test call', () => {
   
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 it('verifies scan call', async () => {
   
@@ -38,7 +49,10 @@ it('verifies scan call', async () => {
     
     expect(mDocumentClientInstance.scan).toBeCalledTimes(1);
     expect(mDocumentClientInstance.scan).toBeCalledWith({ TableName: 'Table1' });
-    
+    Promise.all([result]).then((values) => {
+      expect(values).toContainEqual({"PK": "userId-123", "SK": "userId-123"});
+    });
+        
   });
 
   it('handle exception cases', async () => {
@@ -46,7 +60,7 @@ it('verifies scan call', async () => {
     const context = {};
     const event = {
       resource: "/clients",
-      httpMethod: "GETPUT",
+      httpMethod: "GET",
       body: '{}'
     };
 
@@ -58,9 +72,32 @@ it('verifies scan call', async () => {
     ).not.toBeInstanceOf(Error);
   });  
 
-  
+  it('handle exception cases', async () => {
 
+    const context = {};
+    const event = {
+      resource: "/clients",
+      httpMethod: "GETPUT",
+      body: '{}',
+      pathParameters: {
+        id: 1
+      }
+    };
+    const sns = {
+      publish: {}
+    };
 
+    const mockCallback = jest.fn((smth, params) => {      
+      return {statusCode: params.statusCode, body: params.body}
+    });
 
+    const clientCounter = require("../lambda/clientCounter");
+    const result = clientCounter.fetchDonationsCount(event, sns, 'Table1', mockCallback);
+    
+    expect(mDocumentClientInstance.query).toBeCalledTimes(1);         
+    
+  });  
 
 });
+
+

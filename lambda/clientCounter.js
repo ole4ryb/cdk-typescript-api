@@ -6,7 +6,7 @@ var documentClient = new DynamoDB.DocumentClient();
 module.exports.handler = async (event, context, callback) => {
     const TABLE = process.env.DYNAMODB_TABLE;
     let body;
-    let successStatusCode = 200;
+    let statusCode = 200;
     console.log("request:", JSON.stringify(event, undefined, 2));
     
     let path = event.resource;
@@ -99,7 +99,7 @@ module.exports.handler = async (event, context, callback) => {
     }
 
     const response = {
-      statusCode: successStatusCode,
+      statusCode: statusCode,
       body: body 
     };
     callback(null, response);
